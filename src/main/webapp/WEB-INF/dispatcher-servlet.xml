@@ -1,0 +1,122 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc 
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+    
+    
+   
+    
+    <tx:annotation-driven transaction-manager="hibernateTransactionManager" />
+    <!--  <tx:annotaion-driven /> -->
+     
+	<context:component-scan base-package="com.ramersoft.pos.*" />
+	<!-- <context:component-scan base-package="com.ramersoft.pos.ui.controller.MainController" /> -->
+    <context:annotation-config/>  
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/views/</value>
+		</property>
+		<property name="suffix">
+			 <value>.jsp</value>
+		</property>
+	</bean>
+	
+	<!-- <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/pos096" />
+		<property name="username" value="root" />
+		<property name="password" value="1_MysqlRoot" />
+	</bean> -->
+	
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<!-- <property name="driverClassName" value="org.postgresql.Driver" /> -->
+		<property name="driverClassName" value="com.p6spy.engine.spy.P6SpyDriver" />
+		<property name="url" value="jdbc:p6spy:postgresql://localhost:5432/pos097" />
+<!-- 		<property name="url" value="jdbc:postgresql://localhost:5432/pos097" />
+ -->		<property name="username" value="postgres" />
+		<property name="password" value="postgres" />	
+	</bean>
+	
+	 <!-- jdbcTemplate uses dataSource -->
+   <!-- Uncomment it to use jdbc template for connectivity  -->
+  <!--   <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource" />
+    </bean>  -->
+    
+    
+    <bean
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean"
+		id="sessionFactory">
+		<property name="dataSource" ref="dataSource"></property>	
+		<property name="annotatedClasses">
+			<list>
+				<value>com.ramersoft.pos.entities.Student</value>
+				<value>com.ramersoft.pos.entities.ERPUSERS</value>
+				<value>com.ramersoft.pos.entities.ERP_Outlets</value>
+				<value>com.ramersoft.pos.entities.Local_Data</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Day_In_Out_Transaction</value>
+				<value>com.ramersoft.pos.entities.Pos_Categories</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Categories</value>
+				<value>com.ramersoft.pos.entities.Pos_Items</value>
+				<value>com.ramersoft.pos.entities.Pos_Item_Prices</value>
+				<value>com.ramersoft.pos.entities.Pos_Item_Price_Partitions</value>
+				<value>com.ramersoft.pos.entities.Pos_HsnCodes</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Item_Portion_Prices</value>
+				<value>com.ramersoft.pos.entities.Pos_Units</value>
+				<value>com.ramersoft.pos.entities.Pos_Unit_Portions</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Billpark_Items</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Bills</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_ProformaBills</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Bom_Items</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_PreOrders</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_BTOBOrders</value>	
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Bom_Amounts</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Bom_Transaction</value>
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Ordertypes</value>		
+				<value>com.ramersoft.pos.entities.Pos_Outlet_Bom_Invoice</value>	
+				<value>com.ramersoft.pos.entities.ERP_Companies</value>		
+				<value>com.ramersoft.pos.entities.Pos_Vouchers</value>	
+			    <value>com.ramersoft.pos.entities.Pos_Voucher_Discounts</value> 
+			    <value>com.ramersoft.pos.entities.Pos_CreditNoteDetails</value>
+			    <value>com.ramersoft.pos.entities.Pos_Outlet_PriceChange</value>
+			    <value>com.ramersoft.pos.entities.Local_Query_Log</value>
+		   </list>
+		</property>	
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>
+<!-- 				<prop key="hibernate.show_sql">true</prop> -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			    <prop key="hibernate.current_session_context_class">thread</prop>  
+			    <!-- <prop key="hibernate.format_sql">true</prop> 
+			    <prop key="hibernate.use_sql_comments">true</prop>  -->
+			    <!-- <prop key="hibernate.bytecode.use_reflection_optimizer">false</prop>
+			    <prop key="logging.level.org.hibernate.SQL">DEBUG</prop> -->
+			</props>	
+		</property>
+		
+	</bean>
+
+	<bean class="org.springframework.orm.hibernate4.HibernateTransactionManager"
+		id="hibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+ 
+    <!-- To specify the resources like css,js file -->
+    <!-- In this mapping context / represents webapp folder path webapp/resources/***  -->   
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+    <mvc:annotation-driven />
+      
+
+</beans>

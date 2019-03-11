@@ -1,0 +1,289 @@
+package com.ramersoft.pos.ui.service;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.ramersoft.pos.entities.ERP_Outlets;
+import com.ramersoft.pos.entities.Pos_Outlet_Day_In_Out_Transaction;
+import com.ramersoft.pos.entities.Pos_Outlet_Ordertypes;
+import com.ramersoft.pos.enums.Day_InOut_Transaction_Status;
+import com.ramersoft.pos.ui.beans.CategoriesBean;
+import com.ramersoft.pos.ui.beans.ItemsBean;
+import com.ramersoft.pos.ui.beans.OrderstypesBean;
+import com.ramersoft.pos.ui.beans.UnitsBean;
+import com.ramersoft.pos.ui.dao.PosDao;
+import com.ramersoft.pos.ui.libs.Constants;
+import com.ramersoft.pos.ui.libs.ERPFunctions;
+
+@Service
+public class PosServiceImpl implements PosService{
+    
+	@Autowired
+	PosDao posDao;
+	
+	@Autowired
+	ERPFunctions erpFunObj;
+	
+	
+	/**
+	 * 
+	 */
+	@Override
+	public Pos_Outlet_Day_In_Out_Transaction getDayInDataForToday(HttpSession httpSession) {
+		String outlet_uuid = (String) httpSession.getAttribute("Outlet_uuid");
+		
+		LocalDateTime now = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		String todayDate = now.format(formatter);
+		String dayStartTime = todayDate + " 00:00:00";
+		String dayEndTime = todayDate + " 23:59:59";
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		Date startTime = null;
+		Date endTime = null;
+		try {			
+		  //startTime = (Date)format.parse("2018-12-22 00:00:00");
+			startTime = (Date)format.parse(dayStartTime);
+			endTime =  (Date)format.parse(dayEndTime);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		Pos_Outlet_Day_In_Out_Transaction dayInData =  posDao.getDayInDataForToday(outlet_uuid,startTime,endTime);
+		return dayInData;
+		//return null;
+	}
+
+	@Override
+	public Long set_DayInData(HttpServletRequest request, HttpSession httpSession) {
+		
+		//fields from request
+		String user_uuid = (String) httpSession.getAttribute("User_uuid");
+		String outlet_uuid = (String) httpSession.getAttribute("Outlet_uuid");
+		int counter_number = Integer.parseInt(request.getParameter("counter_number"));
+		double opening_balance = Double.parseDouble(request.getParameter("amount"));
+		
+		//Our generated uuid
+		int outletUuidCnct = Integer.parseInt(outlet_uuid) + 10;
+		String uuid = outletUuidCnct + erpFunObj.uniqueRandAndTimeStamp();
+		
+		Pos_Outlet_Day_In_Out_Transaction dayInDataObj = new Pos_Outlet_Day_In_Out_Transaction();
+		dayInDataObj.setUuid(uuid);
+		dayInDataObj.setCounter_number(counter_number);
+		dayInDataObj.setOpening_balance(opening_balance);
+		dayInDataObj.setCreated_date(new Date());
+		dayInDataObj.setCreated_by(user_uuid);
+		dayInDataObj.setDayin_datetime(new Date());
+		dayInDataObj.setOutlet_uuid(outlet_uuid);
+		dayInDataObj.setUser_uuid(user_uuid);
+	//	dayInDataObj.setDayend_time(new Date());
+	  //dayInDataObj.setStatus(Day_InOut_Transaction_Status.Active);
+		
+		posDao.saveDayInDataForToday(dayInDataObj);
+		return null;
+	}
+
+	@Override
+	public List<CategoriesBean> get_categoryData(HttpServletRequest request, HttpSession httpSession) {
+		String outlet_uuid= (String) httpSession.getAttribute("Outlet_uuid");
+		System.out.println("in get categorydata outlet id is : ........" +httpSession.getAttribute("Outlet_uuid"));
+		int page_start = 0;
+		int page_length = 4;
+		String cur_nav_val1= null;
+		int cur_nav_val =0;
+		try {
+		 cur_nav_val1 = request.getParameter("cur_nav_val");
+		 cur_nav_val = Integer.parseInt(cur_nav_val1);
+		}catch(Exception e) {
+			
+		}
+		
+		if(cur_nav_val!= 0 && cur_nav_val > 0) { 
+		      page_start = cur_nav_val * page_length;
+		}		
+		
+		List<CategoriesBean> mainCategoriesList = posDao.get_categoryData(outlet_uuid, page_length, page_start);
+		
+		return mainCategoriesList;
+	}
+
+	@Override
+	public String get_SubCategoryData(HttpServletRequest request, HttpSession httpSession) {
+		String outlet_uuid= (String) httpSession.getAttribute("Outlet_uuid");
+		String category_uuid = (String) request.getParameter("category_uuid");
+		category_uuid = category_uuid.trim();
+		int page_start = 0;
+		int page_length = 6;
+		String cur_nav_val1= null;
+		int cur_nav_val =0;
+		try {
+		 cur_nav_val1 = request.getParameter("cur_nav_val");
+		 cur_nav_val = Integer.parseInt(cur_nav_val1);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		if(cur_nav_val!= 0 && cur_nav_val > 0) { 
+		      page_start = cur_nav_val * page_length;
+		}
+		
+		
+        int max_pages = 0;
+        int noOfMaxSubCatgry = 0;
+        int maxSubCatgryLimit = Constants.MAX_SUB_CATEGORY_LIMIT;
+        
+        try {
+        	noOfMaxSubCatgry = posDao.get_totalSubCategoryDataNo(outlet_uuid,category_uuid);
+        	System.out.println("=======noOfMaxSubCatgry is=======::"+noOfMaxSubCatgry);
+        	max_pages = (int)Math.ceil((double)noOfMaxSubCatgry/maxSubCatgryLimit);
+        }catch(Exception e) {
+        	System.out.println("problem to set the max_pages in posController");
+        }
+        
+        System.out.println("in PosServiceImpl subCategory max_pages are:"+max_pages);
+
+
+		List<CategoriesBean> subCategoriesList = posDao.get_SubCategoryData(outlet_uuid,category_uuid,page_start,page_length);
+		
+		String sub_categories_table = erpFunObj.getSubCategoriesData(subCategoriesList,request, httpSession);
+		
+		LinkedHashMap<String,String> returnSubCatData = new  LinkedHashMap<String,String>();
+		returnSubCatData.put("tbl_data",sub_categories_table);
+		returnSubCatData.put("max_pages",Integer.toString(max_pages));
+		
+		Gson gsonBuilder = new GsonBuilder().create();
+	    // Convert Java Map into JSON 	  
+	    String jsonFromJavaMap = gsonBuilder.toJson(returnSubCatData);	
+		
+		return jsonFromJavaMap;
+	}
+
+	@Override
+	public String getItemsData(HttpServletRequest request, HttpSession httpSession) {
+		
+		String outlet_uuid= (String) httpSession.getAttribute("Outlet_uuid");
+        String sub_category_id = null;
+        String search_value1 = null;
+        int searchlist = 0;
+        //category_uuid = category_uuid.trim();
+        int page_start = 0;
+        int page_length = 15;
+        String cur_nav_val1= null;
+        int cur_nav_val =0;
+        try {         
+            if(request.getParameter("sub_category_id")!=null) {
+                sub_category_id = (String)request.getParameter("sub_category_id");
+            }else if((Integer.parseInt(request.getParameter("searchlist"))==1)) {
+                search_value1 = request.getParameter("search_value");
+                searchlist = Integer.parseInt(request.getParameter("searchlist"));
+            }
+            
+        }catch(Exception e) {            
+        
+        }
+        
+        if(cur_nav_val!= 0 && cur_nav_val > 0) {
+              page_start = cur_nav_val * page_length;
+        }
+        
+      ///  System.out.println("in getAllItemsData");
+      /*  String qry = null;
+        if(searchlist ==1 ) {
+        String search_value = "%"+search_value1.toUpperCase()+"%";
+        qry = "select distinct(a.uuid) as uuid,a.unit_uuid,a.item_name,d.discount,b.hsn_uuid,c.tax from "+"pos_items"+" a inner join "+"pos_item_prices"+" b on a.uuid = b.item_uuid left join "+"pos_hsncodes "+" c on b.hsn_uuid=c.uuid left join "+" pos_outlet_item_portion_prices "+" d on d.item_uuid=a.uuid where a.item_name LIKE '"+search_value+"' and a.status='Active' and d.status='Active' and d.outlet_uuid='"+outlet_uuid+"' and b.status='Active' order by a.item_name";
+        }else {
+           qry = "select distinct(a.uuid) as uuid,a.unit_uuid,a.item_name,d.discount,b.hsn_uuid,c.tax from "+"pos_items"+" a inner join "+"pos_item_prices"+" b on a.uuid = b.item_uuid left join "+"pos_hsncodes "+" c on b.hsn_uuid=c.uuid left join "+" pos_outlet_item_portion_prices "+" d on d.item_uuid=a.uuid where a.category_uuid='"+sub_category_id+"' and a.status='Active' and d.status='Active' and d.outlet_uuid='"+outlet_uuid+"' and b.status='Active' order by a.item_name";
+            
+        }*/
+        
+        List<ItemsBean> itemsList = posDao.get_AllItemsData(outlet_uuid,sub_category_id);
+        
+        int listCount=0;
+		int max_pages = 0;
+		 try {
+			    if(itemsList.size()>0) {
+			    	double count = (double)itemsList.size();
+			    	listCount = (int)count;
+			    	max_pages = (int)Math.ceil(count/15);
+			    }
+		 }catch(Exception e) {
+		 }
+        
+        LinkedHashMap<String,Object> returnItemsData = new  LinkedHashMap<String,Object>();
+        returnItemsData.put("dataList",itemsList);
+        returnItemsData.put("max_pages",Integer.toString(max_pages));
+        returnItemsData.put("count",Integer.toString(listCount));
+        
+        
+        Gson gsonBuilder = new GsonBuilder().create();	  
+	    String jsonFromItemsMap = gsonBuilder.toJson(returnItemsData);
+		
+	    
+	    System.out.println("Items data before sending:"+jsonFromItemsMap);
+	    
+        return jsonFromItemsMap;
+	} //end of getItemsData
+
+	
+	@Override
+	public String get_AllUnitsData(HttpServletRequest request, HttpSession httpSession) {
+		
+		String outlet_uuid= (String) httpSession.getAttribute("Outlet_uuid");
+		String item_uuid = (String) request.getParameter("id");
+		String unit_id = (String) request.getParameter("UnitID");
+        
+		List<UnitsBean> unitsList = posDao.get_AllUnitsData(outlet_uuid,item_uuid,unit_id);
+		String units_table = erpFunObj.getUnitsList(unitsList,request, httpSession);
+		
+		return units_table;
+	}//end of get_AllUnitsData
+    
+	
+	@Override
+	public String get_generalorderData() {
+		// TODO Auto-generated method stub
+		String general_uuid=posDao.get_generalorderData();
+		return general_uuid;
+	}
+
+	@Override
+	public List<OrderstypesBean> get_ordersData() {
+		
+		List<OrderstypesBean> ordertypes = posDao.get_ordersData();
+		
+		return ordertypes;
+	}
+
+	@Override
+	public ERP_Outlets getOutletName(HttpServletRequest request,HttpSession httpSession) {
+		ERP_Outlets outletName = posDao.getOutletName(request, httpSession);
+		return outletName;
+	}
+	
+	@Override
+	public int get_totalCategoryDataNo(HttpSession httpSession) {
+        int noOfMainCategories = 0;
+        try {
+        	String outlet_uuid= (String) httpSession.getAttribute("Outlet_uuid");
+        	noOfMainCategories = posDao.get_totalCategoryDataNo(outlet_uuid);
+        }catch(Exception e) {
+        	
+        }
+		return noOfMainCategories;
+	}
+	
+}

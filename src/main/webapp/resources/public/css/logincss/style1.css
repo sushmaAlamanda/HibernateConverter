@@ -1,0 +1,78 @@
+.keys
+{
+position: relative;
+    top: -12px;
+    left: -8px;;
+}
+.button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    margin-left: 13px;
+    cursor: pointer;
+    border-top: none;
+    line-height: 20px;
+    margin-top: 22px;
+}
+.button.gray
+{
+color:white;
+background: rgb(99, 32, 112);
+border-bottom:none;
+border-top:none;
+font-size:15px;
+border:1px solid #7d7d7d;
+}
+.button.pink
+{
+color:white;
+background: rgb(99, 32, 112);
+border-bottom:none;
+border-top:none;
+font-size:20px;
+border:1px solid #7d7d7d;
+}
+.button.black
+{
+color:white;
+background: rgb(99, 32, 112);
+font-size:20px;	
+border-bottom:none;
+border-top:none;
+border:1px solid #7d7d7d;
+}
+.button.orange
+{
+color:white;
+background: rgb(99, 32, 112);
+border-bottom:none;
+border-top:none;
+font-size:20px;
+border:1px solid #7d7d7d;
+}
+.gray:active
+{
+border-bottom:none;
+border-top:none;
+	
+}
+.pink:active
+{
+border-bottom:none;
+border-top:none;
+}
+.black:active
+{
+border-bottom:none;
+border-top:none;
+}
+.orange:active
+{
+border-bottom:none;
+border-top:none;
+}
+p
+{
+line-height:10px;
+}

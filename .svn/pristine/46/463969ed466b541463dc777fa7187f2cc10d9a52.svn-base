@@ -1,0 +1,117 @@
+package com.ramersoft.pos.ui.controllers;
+
+/**
+ * Class Name: LoginController
+ * This Controller Handles the request for Login Module
+ */
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.ramersoft.pos.ui.dao.LoginDaoImpl;
+import com.ramersoft.pos.ui.libs.BillsRandomGenerations;
+import com.ramersoft.pos.ui.service.LoginService;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Random;
+
+import javax.annotation.Resource;
+import javax.servlet.http.*;
+
+@Controller
+@RequestMapping("/Login")
+// @SessionAttributes("userDetForSesn,OutletID")
+public class LoginController {
+
+	/**
+	 * Before using @Autowired annotation one must define it's bean in
+	 * dispatcher-servlet.xml The object name must same as id of bean in dispatcher servlet
+	 *  
+	 *  (or)
+	 * 
+	 * Keep an annotation on the class as @Component
+	 */
+	
+	
+	@Autowired
+	private LoginService loginService;
+	
+	@Autowired
+    private BillsRandomGenerations billRandFuncts;
+	
+	
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @return response as invalid if user doesn't exist
+	 *         or
+	 * @returns a string with contains uuid and  four digit random number
+	 */
+	@RequestMapping("/checkUser")
+	@ResponseBody
+	public String showMessages(HttpServletRequest request, HttpServletResponse response) {
+		String responses = loginService.checkUserByLoginDetails(request, response);
+		return responses;
+		
+	}
+    
+	
+	
+	
+	
+	/**
+	 * @return server_type or db_type  i.e node or server db
+	 */
+	@RequestMapping("/localData")
+	@ResponseBody
+	public String getLocalDataInfo() {
+		String dbType = loginService.getLocalDataInfo("server_type");
+		return dbType;
+	}
+    
+	
+	
+	
+	
+	/**
+	 * 
+	 * @param request
+	 * @param httpSession
+	 * @returns valid user or not if user was valid one then it sets session details also 
+	 */
+    @RequestMapping("/checkOtp")
+	@ResponseBody
+	public String checkOtp(HttpServletRequest request, HttpSession httpSession) {
+		
+    	String userStatus = loginService.checkUserValidOrNot(request, httpSession);
+		return userStatus;
+    	
+	}
+    
+    @RequestMapping("/regenerateOtp")
+    @ResponseBody
+    public int regenerateOtp(HttpServletRequest request, HttpSession httpSession) {
+      System.out.println("***********In regenerateOtp******************");
+   int num = 0;
+   try {
+       num = billRandFuncts.getFourDigitRandNumber();
+   }catch(Exception e) {
+       e.printStackTrace();
+   }
+   System.out.println("returned number is:"+num);
+   return num;
+    }
+    
+
+}
