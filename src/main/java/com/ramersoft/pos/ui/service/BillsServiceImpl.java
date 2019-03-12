@@ -81,8 +81,6 @@ public class BillsServiceImpl implements BillsService{
 	    @Override
 		public String generateBillsData(HttpServletRequest request, HttpSession httpSession) {
 			String params_data = request.getParameter("data_array"); 
-			System.out.println("json data in generateBill:");
-			System.out.println(params_data);
 			String outlet_uuids = (String)httpSession.getAttribute("Outlet_uuid");
 			String outlet_uuid = String.valueOf(Integer.valueOf(outlet_uuids)+10);
 			String user_uuid = (String)httpSession.getAttribute("User_uuid");
@@ -131,11 +129,6 @@ public class BillsServiceImpl implements BillsService{
 				e.printStackTrace();
 			}
 			
-			System.out.println("I am going to print all the generated ID");
-			System.out.println("BOM_ID:"+BOM_ID+"--BillAmountID:"+BillAmountID+"--TransactionID:"+TransactionID+"--InvoiceID:"+InvoiceID);
-			
-			
-			/*=====================================*/
 			JsonParser parser = new JsonParser();
 			JsonElement jsonTree = parser.parse(params_data);
 			JsonObject jsonObject = jsonTree.getAsJsonObject();
